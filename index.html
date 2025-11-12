@@ -6,28 +6,61 @@
     <title>José Hidalgo - Simulador de Ondas Electromagnéticas</title>
     <style>
         body {
-            background-color: #1a1a2e; /* Fondo oscuro casi negro */
+            background-color: #1a1a2e; /* Fondo oscuro */
             color: #e0e0e0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 10px;
+            height: 100vh; /* Ocupar toda la altura */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* Evitar scroll lateral */
+        }
+
+        h1 { 
+            color: #8d3aed; 
+            margin: 0 0 15px 0; 
+            text-shadow: 0 0 8px #8d3aed; 
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        /* CONTENEDOR PRINCIPAL (Dos columnas) */
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            height: calc(100vh - 80px); /* Altura restante menos el título */
+        }
+
+        /* COLUMNA IZQUIERDA (Visualización) */
+        .visual-section {
+            flex: 2; /* Ocupa más espacio (66%) */
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
+            justify-content: center;
         }
-        h1 { color: #8d3aed; margin-bottom: 10px; text-shadow: 0 0 8px #8d3aed; text-align: center;}
+
         .canvas-container {
             position: relative;
             box-shadow: 0 0 30px rgba(141, 58, 237, 0.4);
-            border: 2px solid #5a189a; /* Borde morado oscuro */
+            border: 2px solid #5a189a;
             border-radius: 12px;
-            background-color: #0d0d1b; /* Fondo aún más oscuro para el canvas */
-            overflow: hidden; /* Asegura que las ondas no se salgan del borde redondeado */
+            background-color: #0d0d1b;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/9; /* Mantiene proporción rectangular */
+            max-height: 500px;
         }
-        canvas { display: block; }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* Estilo de la cuadrícula en el canvas */
         .canvas-container::before {
             content: '';
             position: absolute;
@@ -35,137 +68,21 @@
             background-image: 
                 linear-gradient(to right, #333333 1px, transparent 1px),
                 linear-gradient(to bottom, #333333 1px, transparent 1px);
-            background-size: 20px 20px; /* Tamaño de cada celda de la cuadrícula */
+            background-size: 20px 20px;
             opacity: 0.15;
             z-index: 0;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            background: #2a2a4a; /* Fondo del panel de control más suave */
-            padding: 25px;
-            border-radius: 15px;
-            margin-top: 30px;
-            max-width: 900px;
-            width: 100%;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
-        }
-        .control-group {
-            border: 1px solid #4a148c; /* Borde del grupo de control */
-            padding: 20px;
-            border-radius: 10px;
-            background-color: #1a1a2e;
-        }
-        .control-group h3 { 
-            margin-top: 0; 
-            color: #8d3aed; 
-            border-bottom: 1px solid #5a189a; 
-            padding-bottom: 8px;
-            text-shadow: 0 0 5px #8d3aed;
-        }
-        .control-group.wave2 { border-color: #ff3cac; } /* Color para Onda 2 */
-        .control-group.wave2 h3 { color: #ff3cac; text-shadow: 0 0 5px #ff3cac; }
-        
-        label { display: block; margin-top: 15px; font-size: 0.95rem; color: #b0b0b0; }
-        
-        /* Estilo especial para los checkboxes */
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px;
-            border-radius: 5px;
-        }
-        .checkbox-label input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
-        .checkbox-label:hover { background: rgba(255, 255, 255, 0.1); }
-
-        .input-row { display: flex; align-items: center; gap: 10px; }
-        input[type="range"] { 
-            flex-grow: 1; 
-            cursor: pointer; 
-            -webkit-appearance: none;
-            width: 100%;
-            height: 8px;
-            background: #4a148c;
-            outline: none;
-            border-radius: 5px;
-            transition: background 0.2s;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #8d3aed;
-            cursor: pointer;
-            box-shadow: 0 0 8px rgba(141, 58, 237, 0.7);
-        }
-        input[type="range"]:hover::-webkit-slider-thumb {
-            background: #a158f7;
-        }
-
-        input[type="number"] { 
-            width: 80px; 
-            background: #3a106e; /* Fondo del input numérico */
-            color: #e0e0e0; 
-            border: 1px solid #5a189a; 
-            padding: 6px 8px; 
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-        
-        .btn-main, .btn-destructive {
-            grid-column: span 2;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-            text-transform: uppercase;
-        }
-        .btn-main {
-            background: #8d3aed; /* Botón de audio morado */
-            color: white;
-            box-shadow: 0 0 15px rgba(141, 58, 237, 0.5);
-        }
-        .btn-main:hover { 
-            background: #a158f7; 
-            box-shadow: 0 0 20px rgba(141, 58, 237, 0.7);
-        }
-        .btn-main.active { /* Estado cuando el audio está encendido */
-            background: #ff3cac; /* Rojo neón */
-            box-shadow: 0 0 15px rgba(255, 60, 172, 0.5);
-        }
-        .btn-main.active:hover {
-            background: #ff6bcc;
-            box-shadow: 0 0 20px rgba(255, 60, 172, 0.7);
-        }
-        
-        .btn-destructive {
-            background: #ffa800; /* Naranja brillante para destructiva */
-            color: black;
-            box-shadow: 0 0 15px rgba(255, 168, 0, 0.5);
-            margin-top: 15px;
-        }
-        .btn-destructive:hover { 
-            background: #ffbb33; 
-            box-shadow: 0 0 20px rgba(255, 168, 0, 0.7);
         }
 
         .legend {
             display: flex;
             gap: 25px;
             margin-top: 15px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: #b0b0b0;
             text-shadow: 0 0 5px rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
         }
         .dot { 
             width: 12px; height: 12px; 
@@ -175,12 +92,122 @@
             vertical-align: middle;
             box-shadow: 0 0 8px rgba(255,255,255,0.5);
         }
+
+        /* COLUMNA DERECHA (Controles) */
+        .controls-section {
+            flex: 1; /* Ocupa menos espacio (33%) */
+            background: #2a2a4a;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            overflow-y: auto; /* Scroll solo en controles si es necesario */
+            max-height: 100%;
+        }
+
+        .control-group {
+            border: 1px solid #4a148c;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #1a1a2e;
+        }
+        .control-group h3 { 
+            margin-top: 0; 
+            color: #8d3aed; 
+            border-bottom: 1px solid #5a189a; 
+            padding-bottom: 8px;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px #8d3aed;
+        }
+        .control-group.wave2 { border-color: #ff3cac; }
+        .control-group.wave2 h3 { color: #ff3cac; text-shadow: 0 0 5px #ff3cac; }
         
+        label { display: block; margin-top: 10px; font-size: 0.9rem; color: #b0b0b0; }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .checkbox-label input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+        .checkbox-label:hover { background: rgba(255, 255, 255, 0.1); }
+
+        .input-row { display: flex; align-items: center; gap: 10px; }
+        input[type="range"] { 
+            flex-grow: 1; 
+            cursor: pointer; 
+            -webkit-appearance: none;
+            height: 6px;
+            background: #4a148c;
+            outline: none;
+            border-radius: 5px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #8d3aed;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(141, 58, 237, 0.7);
+        }
+        input[type="number"] { 
+            width: 60px; 
+            background: #3a106e; 
+            color: #e0e0e0; 
+            border: 1px solid #5a189a; 
+            padding: 4px; 
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-main, .btn-destructive {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.3s ease;
+            text-transform: uppercase;
+        }
+        .btn-main {
+            background: #8d3aed;
+            color: white;
+            box-shadow: 0 0 15px rgba(141, 58, 237, 0.5);
+            margin-bottom: 10px;
+        }
+        .btn-main:hover { background: #a158f7; }
+        .btn-main.active { background: #ff3cac; box-shadow: 0 0 15px rgba(255, 60, 172, 0.5); }
+        
+        .btn-destructive {
+            background: #ffa800;
+            color: black;
+            box-shadow: 0 0 15px rgba(255, 168, 0, 0.5);
+            margin-top: 10px;
+        }
+        .btn-destructive:hover { background: #ffbb33; }
+
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: #4a148c; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8d3aed; }
+
+        /* RESPONSIVE: Si la pantalla es muy chica (celular), vuelve a ponerlo vertical */
         @media (max-width: 900px) {
-            .controls { grid-template-columns: 1fr; }
-            .btn-main, .btn-destructive { grid-column: span 1; }
-            .canvas-container { width: 100%; max-width: 600px; }
-            canvas { width: 100%; height: auto; }
+            .main-layout { flex-direction: column; height: auto; align-items: center; }
+            .visual-section, .controls-section { width: 100%; flex: none; max-width: 100%; }
+            .controls-section { margin-bottom: 30px; }
         }
     </style>
 </head>
@@ -188,73 +215,85 @@
 
     <h1>José Hidalgo - Simulador de Ondas Electromagnéticas</h1>
     
-    <div class="canvas-container">
-        <canvas id="waveCanvas" width="900" height="350"></canvas>
-    </div>
-
-    <div class="legend">
-        <span><span class="dot" style="background:#00f0ff"></span>Onda 1</span> 
-        <span><span class="dot" style="background:#ff3cac"></span>Onda 2</span> 
-        <span><span class="dot" style="background:#fff000"></span>Resultante (Suma)</span> 
-    </div>
-
-    <div class="controls">
-        <button id="btnAudio" class="btn-main">🔈 Iniciar Sonido / Simulador</button>
-
-        <div class="control-group">
-            <h3>Onda 1 (Principal)</h3>
-            <label>Frecuencia (Hz)</label>
-            <div class="input-row">
-                <input type="range" id="freq1" min="10" max="22000" value="440" step="1">
-                <input type="number" id="numFreq1" value="440">
+    <div class="main-layout">
+        
+        <div class="visual-section">
+            <div class="canvas-container">
+                <canvas id="waveCanvas" width="900" height="500"></canvas>
             </div>
-            
-            <label>Amplitud</label>
-            <div class="input-row">
-                <input type="range" id="amp1" min="0" max="100" value="50">
-                <input type="number" id="numAmp1" value="50">
+            <div class="legend">
+                <span><span class="dot" style="background:#00f0ff"></span>Onda 1</span> 
+                <span><span class="dot" style="background:#ff3cac"></span>Onda 2</span> 
+                <span><span class="dot" style="background:#fff000"></span>Resultante</span> 
             </div>
         </div>
 
-        <div class="control-group wave2">
-            <h3>Onda 2 (Superposición)</h3>
-            
-            <label class="checkbox-label">
-                <input type="checkbox" id="useWave2"> Activar Segunda Onda
-            </label>
-            
-            <label class="checkbox-label" style="color: #fff000;">
-                <input type="checkbox" id="showResultant" checked> 👁️ Ver Onda Resultante (Suma)
-            </label>
+        <div class="controls-section">
+            <button id="btnAudio" class="btn-main">🔈 Iniciar Sonido / Simulador</button>
 
-            <hr style="border-color: #444; margin: 15px 0;">
-
-            <label>Frecuencia (Hz)</label>
-            <div class="input-row">
-                <input type="range" id="freq2" min="10" max="22000" value="440" step="1">
-                <input type="number" id="numFreq2" value="440">
+            <div class="control-group">
+                <h3>Onda 1 (Principal)</h3>
+                <label>Frecuencia (Hz)</label>
+                <div class="input-row">
+                    <input type="range" id="freq1" min="10" max="22000" value="440" step="1">
+                    <input type="number" id="numFreq1" value="440">
+                </div>
+                
+                <label>Amplitud</label>
+                <div class="input-row">
+                    <input type="range" id="amp1" min="0" max="100" value="50">
+                    <input type="number" id="numAmp1" value="50">
+                </div>
             </div>
 
-            <label>Amplitud</label>
-            <div class="input-row">
-                <input type="range" id="amp2" min="0" max="100" value="50">
-                <input type="number" id="numAmp2" value="50">
+            <div class="control-group wave2">
+                <h3>Onda 2 (Interferencia)</h3>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="useWave2"> Activar Segunda Onda
+                </label>
+                
+                <label class="checkbox-label" style="color: #fff000;">
+                    <input type="checkbox" id="showResultant" checked> 👁️ Ver Onda Resultante
+                </label>
+
+                <hr style="border-color: #444; margin: 10px 0; opacity: 0.5;">
+
+                <label>Frecuencia (Hz)</label>
+                <div class="input-row">
+                    <input type="range" id="freq2" min="10" max="22000" value="440" step="1">
+                    <input type="number" id="numFreq2" value="440">
+                </div>
+
+                <label>Amplitud</label>
+                <div class="input-row">
+                    <input type="range" id="amp2" min="0" max="100" value="50">
+                    <input type="number" id="numAmp2" value="50">
+                </div>
+
+                <label>Desfase (Grados)</label>
+                <div class="input-row">
+                    <input type="range" id="phase2" min="0" max="360" value="0">
+                    <input type="number" id="numPhase2" value="0">
+                </div>
             </div>
 
-            <label>Desfase (Grados)</label>
-            <div class="input-row">
-                <input type="range" id="phase2" min="0" max="360" value="0">
-                <input type="number" id="numPhase2" value="0">
-            </div>
-            
+            <button id="btnDestructive" class="btn-destructive">💥 Demostrar Silencio (Interferencia Destructiva)</button>
         </div>
-
-        <button id="btnDestructive" class="btn-destructive">💥 Demostrar Silencio (Interferencia Destructiva)</button>
     </div>
 
     <script>
         const canvas = document.getElementById('waveCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Ajustar canvas al tamaño real del contenedor para evitar borrosidad
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Llamada inicial
         
         // Audio Context
         let audioCtx;
@@ -264,40 +303,35 @@
 
         // Variables del sistema
         let params = {
-            f1: 440, // Frecuencia Onda 1
-            a1: 50,  // Amplitud Onda 1
-            active2: false, // Activar Onda 2
-            showResultant: true, // Mostrar Onda Resultante
-            f2: 440, // Frecuencia Onda 2
-            a2: 50,  // Amplitud Onda 2
-            phase2: 0, // Desfase Onda 2 en grados
-            speed: 0.05 // Velocidad de animación
+            f1: 440,
+            a1: 50,
+            active2: false,
+            showResultant: true,
+            f2: 440,
+            a2: 50,
+            phase2: 0,
+            speed: 0.05
         };
 
-        let time = 0; // Para la animación
+        let time = 0;
 
-        // Referencias DOM (Elementos de la página)
         const inputs = {
             freq1: document.getElementById('freq1'),
             numFreq1: document.getElementById('numFreq1'),
             amp1: document.getElementById('amp1'),
             numAmp1: document.getElementById('numAmp1'),
-            
             useWave2: document.getElementById('useWave2'),
-            showResultant: document.getElementById('showResultant'), // Nuevo botón
-            
+            showResultant: document.getElementById('showResultant'),
             freq2: document.getElementById('freq2'),
             numFreq2: document.getElementById('numFreq2'),
             amp2: document.getElementById('amp2'),
             numAmp2: document.getElementById('numAmp2'),
             phase2: document.getElementById('phase2'),
             numPhase2: document.getElementById('numPhase2'),
-            
             btnAudio: document.getElementById('btnAudio'),
             btnDestructive: document.getElementById('btnDestructive')
         };
 
-        // Función para conectar sliders con números
         function syncInputs(range, number, key) {
             range.addEventListener('input', () => {
                 number.value = range.value;
@@ -317,7 +351,6 @@
         syncInputs(inputs.amp2, inputs.numAmp2, 'a2');
         syncInputs(inputs.phase2, inputs.numPhase2, 'phase2');
 
-        // Eventos de Checkboxes
         inputs.useWave2.addEventListener('change', (e) => {
             params.active2 = e.target.checked;
             updateAudio();
@@ -327,25 +360,20 @@
             params.showResultant = e.target.checked;
         });
 
-        // Botón Especial: Interferencia Destructiva
         inputs.btnDestructive.addEventListener('click', () => {
-            // Activar todo lo necesario
             inputs.useWave2.checked = true;
             params.active2 = true;
-            inputs.showResultant.checked = true; // Asegurarnos que se vea el resultado (línea plana)
+            inputs.showResultant.checked = true;
             params.showResultant = true;
             
-            // Igualar Frecuencia
             params.f2 = params.f1;
             inputs.freq2.value = params.f1;
             inputs.numFreq2.value = params.f1;
 
-            // Igualar Amplitud
             params.a2 = params.a1;
             inputs.amp2.value = params.a1;
             inputs.numAmp2.value = params.a1;
 
-            // Desfase exacto 180 grados
             params.phase2 = 180;
             inputs.phase2.value = 180;
             inputs.numPhase2.value = 180;
@@ -353,13 +381,11 @@
             updateAudio();
         });
 
-        // Configuración de Audio
         inputs.btnAudio.addEventListener('click', () => {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 oscillator = audioCtx.createOscillator();
                 gainNode = audioCtx.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 oscillator.start(0);
@@ -381,11 +407,8 @@
 
         function updateAudio() {
             if (!audioCtx || !isAudioOn) return;
-
             oscillator.frequency.setValueAtTime(params.f1, audioCtx.currentTime);
-
             let totalAmp = params.a1;
-            
             if (params.active2) {
                 if (params.f1 === params.f2) {
                     const rads = (params.phase2 * Math.PI) / 180;
@@ -395,29 +418,23 @@
                     totalAmp = params.a1 + params.a2; 
                 }
             }
-
             const maxSimulatedAmp = 200;
             const vol = (totalAmp / maxSimulatedAmp) * 0.2; 
             gainNode.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1);
         }
 
-        // DIBUJO (Loop de animación)
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             const centerY = canvas.height / 2;
-            const waveLengthScaleFactor = 2000; 
+            // Ajustar escala visual según el ancho del canvas para que las ondas no se vean muy apretadas o estiradas
+            const waveLengthScaleFactor = canvas.width * 2.5; 
             
             function drawWave(amplitude, frequency, phase, color, lineWidth, glowColor) {
                 ctx.beginPath();
                 ctx.strokeStyle = color;
                 ctx.lineWidth = lineWidth;
-                if (glowColor) {
-                    ctx.shadowBlur = 10; 
-                    ctx.shadowColor = glowColor;
-                } else {
-                    ctx.shadowBlur = 0;
-                }
+                if (glowColor) { ctx.shadowBlur = 10; ctx.shadowColor = glowColor; } 
+                else { ctx.shadowBlur = 0; }
 
                 for (let x = 0; x < canvas.width; x++) {
                     const wavelengthVisual = waveLengthScaleFactor / frequency; 
@@ -429,7 +446,6 @@
                 ctx.stroke();
             }
 
-            // Calcular resultantes
             let y1_values = [];
             let y2_values = [];
             let y_resultant_values = [];
@@ -450,29 +466,24 @@
                 }
             }
             
-            // Dibujar Onda 1 (Azul) - SIEMPRE VISIBLE
             drawWave(params.a1, params.f1, 0, '#00f0ff', 2.5, '#00f0ff');
 
-            // Dibujar Onda 2 (Rosa) - Si está activa
             if (params.active2) {
                 drawWave(params.a2, params.f2, params.phase2, '#ff3cac', 2.5, '#ff3cac');
             }
 
-            // Dibujar ONDA RESULTANTE (Amarilla) - Solo si el botón está marcado
             if (params.showResultant) {
                 ctx.beginPath();
                 ctx.strokeStyle = '#fff000'; 
                 ctx.lineWidth = 4;
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = '#fff000';
-
                 for (let x = 0; x < canvas.width; x++) {
                     ctx.lineTo(x, centerY - y_resultant_values[x]);
                 }
                 ctx.stroke();
                 ctx.shadowBlur = 0; 
             }
-
             time += params.speed; 
             requestAnimationFrame(draw); 
         }
