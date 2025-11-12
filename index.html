@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>José Hidalgo Simulador de Ondas Electromagnéticas</title>
+    <title>José Hidalgo - Simulador de Ondas Electromagnéticas</title>
     <style>
         body {
             background-color: #1a1a2e; /* Fondo oscuro casi negro */
@@ -16,7 +16,7 @@
             padding: 20px;
             overflow-x: hidden;
         }
-        h1 { color: #8d3aed; margin-bottom: 10px; text-shadow: 0 0 8px #8d3aed; }
+        h1 { color: #8d3aed; margin-bottom: 10px; text-shadow: 0 0 8px #8d3aed; text-align: center;}
         .canvas-container {
             position: relative;
             box-shadow: 0 0 30px rgba(141, 58, 237, 0.4);
@@ -69,6 +69,20 @@
         .control-group.wave2 h3 { color: #ff3cac; text-shadow: 0 0 5px #ff3cac; }
         
         label { display: block; margin-top: 15px; font-size: 0.95rem; color: #b0b0b0; }
+        
+        /* Estilo especial para los checkboxes */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .checkbox-label input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+        .checkbox-label:hover { background: rgba(255, 255, 255, 0.1); }
+
         .input-row { display: flex; align-items: center; gap: 10px; }
         input[type="range"] { 
             flex-grow: 1; 
@@ -179,7 +193,10 @@
     </div>
 
     <div class="legend">
-        <span><span class="dot" style="background:#00f0ff"></span>Onda 1</span> <span><span class="dot" style="background:#ff3cac"></span>Onda 2</span> <span><span class="dot" style="background:#fff000"></span>Resultante (Suma)</span> </div>
+        <span><span class="dot" style="background:#00f0ff"></span>Onda 1</span> 
+        <span><span class="dot" style="background:#ff3cac"></span>Onda 2</span> 
+        <span><span class="dot" style="background:#fff000"></span>Resultante (Suma)</span> 
+    </div>
 
     <div class="controls">
         <button id="btnAudio" class="btn-main">🔈 Iniciar Sonido / Simulador</button>
@@ -201,9 +218,16 @@
 
         <div class="control-group wave2">
             <h3>Onda 2 (Superposición)</h3>
-            <label>
+            
+            <label class="checkbox-label">
                 <input type="checkbox" id="useWave2"> Activar Segunda Onda
             </label>
+            
+            <label class="checkbox-label" style="color: #fff000;">
+                <input type="checkbox" id="showResultant" checked> 👁️ Ver Onda Resultante (Suma)
+            </label>
+
+            <hr style="border-color: #444; margin: 15px 0;">
 
             <label>Frecuencia (Hz)</label>
             <div class="input-row">
@@ -238,65 +262,78 @@
         let gainNode;
         let isAudioOn = false;
 
-        // Variables
+        // Variables del sistema
         let params = {
             f1: 440, // Frecuencia Onda 1
             a1: 50,  // Amplitud Onda 1
             active2: false, // Activar Onda 2
+            showResultant: true, // Mostrar Onda Resultante
             f2: 440, // Frecuencia Onda 2
             a2: 50,  // Amplitud Onda 2
             phase2: 0, // Desfase Onda 2 en grados
             speed: 0.05 // Velocidad de animación
         };
 
-        let time = 0; // Para la animación de la onda
+        let time = 0; // Para la animación
 
-        // Referencias DOM
+        // Referencias DOM (Elementos de la página)
         const inputs = {
             freq1: document.getElementById('freq1'),
             numFreq1: document.getElementById('numFreq1'),
             amp1: document.getElementById('amp1'),
             numAmp1: document.getElementById('numAmp1'),
+            
             useWave2: document.getElementById('useWave2'),
-            freq2: document.getElementById('freq2'), // Nuevo control de frecuencia para Onda 2
+            showResultant: document.getElementById('showResultant'), // Nuevo botón
+            
+            freq2: document.getElementById('freq2'),
             numFreq2: document.getElementById('numFreq2'),
             amp2: document.getElementById('amp2'),
             numAmp2: document.getElementById('numAmp2'),
             phase2: document.getElementById('phase2'),
             numPhase2: document.getElementById('numPhase2'),
+            
             btnAudio: document.getElementById('btnAudio'),
             btnDestructive: document.getElementById('btnDestructive')
         };
 
-        // Sincronizar Inputs
+        // Función para conectar sliders con números
         function syncInputs(range, number, key) {
             range.addEventListener('input', () => {
                 number.value = range.value;
                 params[key] = parseFloat(range.value);
-                updateAudio(); // Actualizar el audio al cambiar cualquier parámetro relevante
+                updateAudio();
             });
             number.addEventListener('input', () => {
                 range.value = number.value;
                 params[key] = parseFloat(number.value);
-                updateAudio(); // Actualizar el audio
+                updateAudio();
             });
         }
 
         syncInputs(inputs.freq1, inputs.numFreq1, 'f1');
         syncInputs(inputs.amp1, inputs.numAmp1, 'a1');
-        syncInputs(inputs.freq2, inputs.numFreq2, 'f2'); // Sincronizar Frecuencia Onda 2
+        syncInputs(inputs.freq2, inputs.numFreq2, 'f2');
         syncInputs(inputs.amp2, inputs.numAmp2, 'a2');
         syncInputs(inputs.phase2, inputs.numPhase2, 'phase2');
 
+        // Eventos de Checkboxes
         inputs.useWave2.addEventListener('change', (e) => {
             params.active2 = e.target.checked;
             updateAudio();
         });
 
-        // Botón Demostrar Interferencia Destructiva Total
+        inputs.showResultant.addEventListener('change', (e) => {
+            params.showResultant = e.target.checked;
+        });
+
+        // Botón Especial: Interferencia Destructiva
         inputs.btnDestructive.addEventListener('click', () => {
+            // Activar todo lo necesario
             inputs.useWave2.checked = true;
             params.active2 = true;
+            inputs.showResultant.checked = true; // Asegurarnos que se vea el resultado (línea plana)
+            params.showResultant = true;
             
             // Igualar Frecuencia
             params.f2 = params.f1;
@@ -308,7 +345,7 @@
             inputs.amp2.value = params.a1;
             inputs.numAmp2.value = params.a1;
 
-            // Desfase 180 grados
+            // Desfase exacto 180 grados
             params.phase2 = 180;
             inputs.phase2.value = 180;
             inputs.numPhase2.value = 180;
@@ -316,7 +353,7 @@
             updateAudio();
         });
 
-        // Audio Setup
+        // Configuración de Audio
         inputs.btnAudio.addEventListener('click', () => {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -325,7 +362,7 @@
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                oscillator.start(0); // Inicia el oscilador en tiempo 0
+                oscillator.start(0);
             }
 
             if (isAudioOn) {
@@ -345,57 +382,44 @@
         function updateAudio() {
             if (!audioCtx || !isAudioOn) return;
 
-            // La frecuencia del oscilador principal será la de la Onda 1
             oscillator.frequency.setValueAtTime(params.f1, audioCtx.currentTime);
 
-            // Calcular Amplitud Resultante Matemática para el Volumen
             let totalAmp = params.a1;
             
             if (params.active2) {
-                // Si las frecuencias son IGUALES, usamos la fórmula de interferencia para el volumen
                 if (params.f1 === params.f2) {
                     const rads = (params.phase2 * Math.PI) / 180;
                     const term = 2 * params.a1 * params.a2 * Math.cos(rads);
                     totalAmp = Math.sqrt(Math.pow(params.a1, 2) + Math.pow(params.a2, 2) + term);
                 } else {
-                    // Si las frecuencias son DIFERENTES, la onda resultante tiene una amplitud variable.
-                    // Para simplificar el control de volumen, tomamos un promedio o la suma máxima.
-                    // Aquí usamos la suma de amplitudes como un máximo de lo que podría sonar.
                     totalAmp = params.a1 + params.a2; 
                 }
             }
 
-            // Normalizar volumen (0 a 1, mapeado a 0.2 de ganancia real para seguridad)
-            // La amplitud máxima posible en la simulación es 200 (100 + 100).
             const maxSimulatedAmp = 200;
-            const vol = (totalAmp / maxSimulatedAmp) * 0.2; // Mapear a un rango de ganancia segura
+            const vol = (totalAmp / maxSimulatedAmp) * 0.2; 
             gainNode.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1);
         }
 
         // DIBUJO (Loop de animación)
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpia el canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const centerY = canvas.height / 2;
-            const waveLengthScaleFactor = 2000; // Ajusta este valor para hacer las ondas más largas o cortas
-                                                // Un valor más pequeño = ondas más "apretadas"
-                                                // Un valor más grande = ondas más "estiradas"
+            const waveLengthScaleFactor = 2000; 
             
-            // Función para dibujar una onda
             function drawWave(amplitude, frequency, phase, color, lineWidth, glowColor) {
                 ctx.beginPath();
                 ctx.strokeStyle = color;
                 ctx.lineWidth = lineWidth;
                 if (glowColor) {
-                    ctx.shadowBlur = 10; // Reducir un poco el blur para que no se vea tan difuso
+                    ctx.shadowBlur = 10; 
                     ctx.shadowColor = glowColor;
                 } else {
                     ctx.shadowBlur = 0;
                 }
 
                 for (let x = 0; x < canvas.width; x++) {
-                    // La longitud de onda visual es inversamente proporcional a la frecuencia.
-                    // Ajustamos el factor de escala para que se vea bien en el canvas.
                     const wavelengthVisual = waveLengthScaleFactor / frequency; 
                     const k = (2 * Math.PI) / wavelengthVisual;
                     const phaseRad = (phase * Math.PI) / 180;
@@ -405,7 +429,7 @@
                 ctx.stroke();
             }
 
-            // Calcular valores para Onda 1 y 2
+            // Calcular resultantes
             let y1_values = [];
             let y2_values = [];
             let y_resultant_values = [];
@@ -422,36 +446,37 @@
                     y2_values[x] = params.a2 * Math.sin(k2 * x - time + phaseRad2);
                     y_resultant_values[x] = y1_values[x] + y2_values[x];
                 } else {
-                    y_resultant_values[x] = y1_values[x]; // Si Onda 2 no está activa, la resultante es solo Onda 1
+                    y_resultant_values[x] = y1_values[x];
                 }
             }
             
-            // Dibujar Onda 1 (Azul Cian)
+            // Dibujar Onda 1 (Azul) - SIEMPRE VISIBLE
             drawWave(params.a1, params.f1, 0, '#00f0ff', 2.5, '#00f0ff');
 
-            // Dibujar Onda 2 (Rosa/Fucsia) si está activa
+            // Dibujar Onda 2 (Rosa) - Si está activa
             if (params.active2) {
                 drawWave(params.a2, params.f2, params.phase2, '#ff3cac', 2.5, '#ff3cac');
             }
 
-            // Dibujar ONDA RESULTANTE (Amarillo Brillante)
-            ctx.beginPath();
-            ctx.strokeStyle = '#fff000'; // Amarillo brillante
-            ctx.lineWidth = 4;
-            ctx.shadowBlur = 15; // Un poco más de glow para la resultante
-            ctx.shadowColor = '#fff000';
+            // Dibujar ONDA RESULTANTE (Amarilla) - Solo si el botón está marcado
+            if (params.showResultant) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#fff000'; 
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#fff000';
 
-            for (let x = 0; x < canvas.width; x++) {
-                ctx.lineTo(x, centerY - y_resultant_values[x]);
+                for (let x = 0; x < canvas.width; x++) {
+                    ctx.lineTo(x, centerY - y_resultant_values[x]);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0; 
             }
-            ctx.stroke();
-            ctx.shadowBlur = 0; // Resetear sombra para no afectar otros elementos
 
-            time += params.speed; // Incrementa el tiempo para la animación
-            requestAnimationFrame(draw); // Llama a draw en el siguiente frame
+            time += params.speed; 
+            requestAnimationFrame(draw); 
         }
 
-        // Inicializar
         updateAudio();
         draw();
     </script>
